@@ -10,7 +10,7 @@ mod force;
 use force::*;
 
 mod velocity_conversions;
-use velocity_conversions::*;
+use velocity_conversions::VelocityConversions;
 
 fn manipulate_simulation(
     time_s: f64,
