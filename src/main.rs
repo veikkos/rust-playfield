@@ -45,9 +45,15 @@ fn main() {
     loop {
         let drag = f_drag(velocity_ms);
         let gradient_force = f_gradient(weight, gradient_angle);
+        let rolling_force = if velocity_ms > 0.0 {
+            f_rolling(weight)
+        } else {
+            0.0
+        };
         let pid_output = pid.step(velocity_ms, velocity_desired_kmh.kmh_to_ms());
         let throttle_position = pid.clamp_and_normalize(pid_output);
-        let force_forward = throttle_position * f_engine(velocity_ms) - drag - gradient_force;
+        let force_forward =
+            throttle_position * f_engine(velocity_ms) - drag - gradient_force - rolling_force;
         let acc = force_forward / weight;
         velocity_ms += acc * (t_delta_ms / 1000.0);
 
@@ -56,12 +62,13 @@ fn main() {
 
         print!("\x1B[2J\x1B[1;1H");
         println!(
-            "Speed {:.1}, cruise {:.1}, force {:.1}, drag {:.1}, grad {:.1}, acc {:.2}, pid_output {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
+            "Speed {:.1}, cruise {:.1}, force {:.1}, drag {:.1}, grad {:.1}, roll {:.1}, acc {:.2}, pid_output {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
             velocity_ms.ms_to_kmh(),
             velocity_desired_kmh,
             force_forward,
             drag,
             gradient_force,
+            rolling_force,
             acc,
             throttle_position,
             measurement.to_hundred.unwrap_or(0.0),
