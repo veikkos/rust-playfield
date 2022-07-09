@@ -9,20 +9,8 @@ use measurement::Measurement;
 mod force;
 use force::*;
 
-trait VelocityConversions {
-    fn ms_to_kmh(&self) -> Self;
-    fn kmh_to_ms(&self) -> Self;
-}
-
-impl VelocityConversions for f64 {
-    fn ms_to_kmh(&self) -> f64 {
-        self * 3.6
-    }
-
-    fn kmh_to_ms(&self) -> f64 {
-        self / 3.6
-    }
-}
+mod velocity_conversions;
+use velocity_conversions::*;
 
 fn manipulate_simulation(
     time_s: f64,
@@ -69,7 +57,7 @@ fn main() {
         print!("\x1B[2J\x1B[1;1H");
         println!(
             "Speed {:.1}, cruise {:.1}, force {:.1}, drag {:.1}, grad {:.1}, acc {:.2}, pid_output {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
-            velocity_ms * 3.6,
+            velocity_ms.ms_to_kmh(),
             velocity_desired_kmh,
             force_forward,
             drag,
