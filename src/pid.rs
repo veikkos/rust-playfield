@@ -3,18 +3,20 @@ pub struct Controller {
     pub ki: f64,
     pub kd: f64,
     pub iteration_time: f64,
+    pub output_clamp: f64,
     integral_prior: f64,
     error_prior: f64,
     bias: f64,
 }
 
 impl Controller {
-    pub fn new(kp: f64, ki: f64, kd: f64, iteration_time: f64) -> Controller {
+    pub fn new(kp: f64, ki: f64, kd: f64, iteration_time: f64, output_clamp: f64) -> Controller {
         Controller {
             kp,
             ki,
             kd,
             iteration_time,
+            output_clamp,
             integral_prior: 0.0,
             error_prior: 0.0,
             bias: 0.0,
@@ -38,6 +40,20 @@ impl Controller {
         }
 
         output
+    }
+
+    pub fn clamp_and_normalize(&self, pid_output: f64) -> f64 {
+        let pid_output_clamped = if pid_output < self.output_clamp {
+            pid_output
+        } else {
+            self.output_clamp
+        };
+        let pid_output_normalized = pid_output_clamped / self.output_clamp;
+        if pid_output_normalized > 0.0 {
+            pid_output_normalized
+        } else {
+            0.0
+        }
     }
 
     pub fn clear(&mut self) {
