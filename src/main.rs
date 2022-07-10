@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate assert_float_eq;
+
 use std::{thread, time::Duration};
 
 mod pid;
@@ -11,6 +14,8 @@ use force::*;
 
 mod velocity_conversions;
 use velocity_conversions::VelocityConversions;
+
+mod engine;
 
 fn manipulate_simulation(
     time_s: f64,
