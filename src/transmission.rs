@@ -1,5 +1,3 @@
-use crate::transmission;
-
 const GEAR_RATIOS: [f64; 6] = [3.583, 1.952, 1.290, 0.971, 0.775, 0.651];
 const FDR: f64 = 4.313;
 
