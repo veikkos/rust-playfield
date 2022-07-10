@@ -15,7 +15,9 @@ use force::*;
 mod velocity_conversions;
 use velocity_conversions::VelocityConversions;
 
+mod car;
 mod engine;
+mod transmission;
 
 fn manipulate_simulation(
     time_s: f64,
