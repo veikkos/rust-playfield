@@ -32,7 +32,7 @@ impl Car {
             weight: 1234.0 + 70.0 + 10.0,
             wheel_radius_m: 0.31115,
             velocity_ms: 0.0,
-            velocity_desired_kmh: 80.0,
+            velocity_desired_kmh: 380.0,
             upshift: 6300.0,
             downshift: 1500.0,
             idle_rpm: 850.0,
