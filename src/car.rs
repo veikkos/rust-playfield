@@ -22,15 +22,17 @@ pub struct Car {
     idle_rpm: f64,
     time_ms: f64,
     powertrain_efficiency: f64,
+    weight_balance: (f64, f64),
 }
 
 impl Car {
     pub fn new() -> Car {
+        const WEIGHT: f64 = 1234.0 + 70.0 + 10.0;
         Car {
             transmission: Transmission { gear: 1 },
             measurement: Measurement::new(),
             pid: Controller::new(4.0, 0.7, 1.0, 10.0),
-            weight: 1234.0 + 70.0 + 10.0,
+            weight: WEIGHT,
             wheel_radius_m: 0.31115,
             velocity_ms: 0.0,
             velocity_desired_kmh: 380.0,
@@ -39,6 +41,7 @@ impl Car {
             idle_rpm: 850.0,
             time_ms: 0.0,
             powertrain_efficiency: 0.7,
+            weight_balance: Car::get_weight_distribution(WEIGHT, 0.0),
         }
     }
 
@@ -57,34 +60,37 @@ impl Car {
         );
         let throttle_position = self.pid.clamp_and_normalize(pid_output);
 
-        let force_forward =
-            throttle_position * self.get_max_force() - drag - gradient_force - rolling_force;
-        let acc = force_forward / self.weight;
-
+        let mut force_forward = throttle_position * self.get_max_force();
+        let traction_control = force_forward > self.weight_balance.0;
+        if traction_control {
+            force_forward = self.weight_balance.0;
+        }
+        let force = force_forward - drag - gradient_force - rolling_force;
+        let acc = force / self.weight;
         self.velocity_ms += acc * (t_delta_ms / 1000.0);
+        self.weight_balance = Car::get_weight_distribution(self.weight, acc);
 
         self.change_gear_if_needed(acc);
-
         self.measurement
             .check_and_store(self.time_ms / 1000.0, self.velocity_ms);
+
         self.time_ms += t_delta_ms;
 
-        let (wf, wr) = self.get_weight_distribution(acc);
-
         println!(
-            "Speed {:.1}, rpm {:.0}, gear {}, cruise {:.1}, force {:.1}, drag {:.1}, grad {:.1}, roll {:.1}, acc {:.2}, pid_output {:.1}, Wf {:.1}, Wr {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
+            "Speed {:.1}, rpm {:.0}, gear {}, cruise {:.1}, force {:.1}, TC {}, drag {:.1}, grad {:.1}, roll {:.1}, acc {:.2}, pid_output {:.1}, Wf {:.1}, Wr {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
             self.velocity_ms.ms_to_kmh(),
             self.get_current_rpm(),
             self.transmission.gear,
             self.velocity_desired_kmh,
-            force_forward,
+            force,
+            traction_control,
             drag,
             gradient_force,
             rolling_force,
             acc,
             throttle_position,
-            wf,
-            wr,
+            self.weight_balance.0,
+            self.weight_balance.1,
             self.measurement.to_hundred.unwrap_or(0.0),
             self.measurement.to_two_hundred.unwrap_or(0.0)
         );
@@ -128,15 +134,15 @@ impl Car {
         self.velocity_ms = velocity_kmh.kmh_to_ms()
     }
 
-    fn get_weight_distribution(&self, acc: f64) -> (f64, f64) {
+    fn get_weight_distribution(weight: f64, acc: f64) -> (f64, f64) {
         const WHEELBASE: f64 = 2.493;
-        const B: f64 = WHEELBASE / 2.0;
+        const B: f64 = WHEELBASE * 0.406;
         const C: f64 = WHEELBASE - B;
-        const H: f64 = 0.4;
-        let w: f64 = self.weight * 9.81;
+        const H: f64 = 0.35;
+        let w: f64 = weight * 9.81;
         (
-            (C / WHEELBASE) * w - (H / WHEELBASE) * self.weight * acc,
-            (B / WHEELBASE) * w + (H / WHEELBASE) * self.weight * acc,
+            (C / WHEELBASE) * w - (H / WHEELBASE) * weight * acc,
+            (B / WHEELBASE) * w + (H / WHEELBASE) * weight * acc,
         )
     }
 }
@@ -145,29 +151,29 @@ impl Car {
 fn get_rpm_test() {
     let mut car = Car::new();
     assert_f64_near!(850.0, car.get_current_rpm());
-    assert_f64_near!(9217.95179945364, car.get_max_force());
+    assert_f64_near!(6452.566259617547, car.get_max_force());
 
     car.set_velocity_kmh(10.0);
     assert_f64_near!(1317.4233064528362, car.get_current_rpm());
-    assert_f64_near!(12538.886104316436, car.get_max_force());
+    assert_f64_near!(8777.220273021503, car.get_max_force());
 
     car.set_velocity_kmh(20.0);
     assert_f64_near!(2634.8466129056724, car.get_current_rpm());
-    assert_f64_near!(14403.04968664631, car.get_max_force());
+    assert_f64_near!(10082.134780652417, car.get_max_force());
 
     car.set_velocity_kmh(30.0);
     assert_f64_near!(3952.2699193585086, car.get_current_rpm());
-    assert_f64_near!(14403.049686646316, car.get_max_force());
+    assert_f64_near!(10082.134780652417, car.get_max_force());
 
     car.set_gear(2);
     assert_f64_near!(2153.1763557320146, car.get_current_rpm());
-    assert_f64_near!(7846.70750441909, car.get_max_force());
+    assert_f64_near!(5492.695253093362, car.get_max_force());
 
     car.set_velocity_kmh(40.0);
     assert_f64_near!(2870.901807642686, car.get_current_rpm());
-    assert_f64_near!(7846.70750441909, car.get_max_force());
+    assert_f64_near!(5492.695253093362, car.get_max_force());
 
     car.set_velocity_kmh(90.0);
     assert_f64_near!(6459.529067196044, car.get_current_rpm());
-    assert_f64_near!(5379.359890423201, car.get_max_force());
+    assert_f64_near!(3765.5519232962406, car.get_max_force());
 }
