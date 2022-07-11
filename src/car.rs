@@ -23,6 +23,7 @@ pub struct Car {
     time_ms: f64,
     powertrain_efficiency: f64,
     weight_balance: (f64, f64),
+    tire_traction: f64,
 }
 
 impl Car {
@@ -42,6 +43,7 @@ impl Car {
             time_ms: 0.0,
             powertrain_efficiency: 0.75,
             weight_balance: Car::get_weight_distribution(WEIGHT, 0.0),
+            tire_traction: 1.5,
         }
     }
 
@@ -66,7 +68,7 @@ impl Car {
         } else {
             throttle_position * self.get_max_force()
         };
-        let traction_control = force_forward > self.weight_balance.0;
+        let traction_control = force_forward > self.weight_balance.0 * self.tire_traction;
         if traction_control {
             force_forward = self.weight_balance.0;
         }
