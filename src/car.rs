@@ -14,7 +14,7 @@ pub struct Car {
     measurement: Measurement,
     pid: Controller,
     weight: f64,
-    wheel_radius: f64,
+    wheel_radius_m: f64,
     velocity_ms: f64,
     velocity_desired_kmh: f64,
     upshift: f64,
@@ -29,8 +29,8 @@ impl Car {
             transmission: Transmission { gear: 1 },
             measurement: Measurement::new(),
             pid: Controller::new(4.0, 0.7, 1.0, 10.0),
-            weight: 1700.0,
-            wheel_radius: 0.31115,
+            weight: 1234.0 + 70.0 + 10.0,
+            wheel_radius_m: 0.31115,
             velocity_ms: 0.0,
             velocity_desired_kmh: 80.0,
             upshift: 6300.0,
@@ -67,8 +67,10 @@ impl Car {
             .check_and_store(self.time_ms / 1000.0, self.velocity_ms);
         self.time_ms += t_delta_ms;
 
+        let (wf, wr) = self.get_weight_distribution(acc);
+
         println!(
-            "Speed {:.1}, rpm {:.0}, gear {}, cruise {:.1}, force {:.1}, drag {:.1}, grad {:.1}, roll {:.1}, acc {:.2}, pid_output {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
+            "Speed {:.1}, rpm {:.0}, gear {}, cruise {:.1}, force {:.1}, drag {:.1}, grad {:.1}, roll {:.1}, acc {:.2}, pid_output {:.1}, Wf {:.1}, Wr {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
             self.velocity_ms.ms_to_kmh(),
             self.get_current_rpm(),
             self.transmission.gear,
@@ -79,6 +81,8 @@ impl Car {
             rolling_force,
             acc,
             throttle_position,
+            wf,
+            wr,
             self.measurement.to_hundred.unwrap_or(0.0),
             self.measurement.to_two_hundred.unwrap_or(0.0)
         );
@@ -99,7 +103,7 @@ impl Car {
     }
 
     fn get_max_force(&self) -> f64 {
-        self.get_torque() / self.wheel_radius
+        self.get_torque() / self.wheel_radius_m
     }
 
     fn set_gear(&mut self, gear: u8) {
@@ -107,8 +111,9 @@ impl Car {
     }
 
     fn get_current_rpm(&self) -> f64 {
-        let rpm = self.velocity_ms / self.wheel_radius * self.transmission.get_final_ratio() * 60.0
-            / (2.0 * PI);
+        let rpm =
+            self.velocity_ms / self.wheel_radius_m * self.transmission.get_final_ratio() * 60.0
+                / (2.0 * PI);
         if rpm < self.idle_rpm {
             self.idle_rpm
         } else {
@@ -119,6 +124,18 @@ impl Car {
     #[allow(dead_code)]
     fn set_velocity_kmh(&mut self, velocity_kmh: f64) {
         self.velocity_ms = velocity_kmh.kmh_to_ms()
+    }
+
+    fn get_weight_distribution(&self, acc: f64) -> (f64, f64) {
+        const WHEELBASE: f64 = 2.493;
+        const B: f64 = WHEELBASE / 2.0;
+        const C: f64 = WHEELBASE - B;
+        const H: f64 = 0.4;
+        let w: f64 = self.weight * 9.81;
+        (
+            (C / WHEELBASE) * w - (H / WHEELBASE) * self.weight * acc,
+            (B / WHEELBASE) * w + (H / WHEELBASE) * self.weight * acc,
+        )
     }
 }
 
