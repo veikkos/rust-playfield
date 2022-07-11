@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use crate::{
-    engine::get_torque,
+    engine::{get_max_rpm, get_torque},
     force::{f_drag, f_gradient, f_rolling},
     measurement::Measurement,
     pid::Controller,
@@ -60,7 +60,12 @@ impl Car {
         );
         let throttle_position = self.pid.clamp_and_normalize(pid_output);
 
-        let mut force_forward = throttle_position * self.get_max_force();
+        let rpm = self.get_current_rpm();
+        let mut force_forward = if rpm > get_max_rpm() {
+            0.0
+        } else {
+            throttle_position * self.get_max_force()
+        };
         let traction_control = force_forward > self.weight_balance.0;
         if traction_control {
             force_forward = self.weight_balance.0;
@@ -79,7 +84,7 @@ impl Car {
         println!(
             "Speed {:.1}, rpm {:.0}, gear {}, cruise {:.1}, force {:.1}, TC {}, drag {:.1}, grad {:.1}, roll {:.1}, acc {:.2}, pid_output {:.1}, Wf {:.1}, Wr {:.1}, 0-100: {:.1}s, 0-200: {:.1}s",
             self.velocity_ms.ms_to_kmh(),
-            self.get_current_rpm(),
+            rpm,
             self.transmission.gear,
             self.velocity_desired_kmh,
             force,

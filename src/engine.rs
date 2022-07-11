@@ -77,6 +77,10 @@ pub fn get_torque(rpm: f64) -> f64 {
     }
 }
 
+pub fn get_max_rpm() -> f64 {
+    6500.0
+}
+
 #[test]
 fn get_torque_test() {
     assert_f64_near!(185.6, get_torque(0.0));
