@@ -21,6 +21,7 @@ pub struct Car {
     downshift: f64,
     idle_rpm: f64,
     time_ms: f64,
+    powertrain_efficiency: f64,
 }
 
 impl Car {
@@ -37,6 +38,7 @@ impl Car {
             downshift: 1500.0,
             idle_rpm: 850.0,
             time_ms: 0.0,
+            powertrain_efficiency: 0.7,
         }
     }
 
@@ -99,7 +101,7 @@ impl Car {
 
     fn get_torque(&self) -> f64 {
         let rpm = self.get_current_rpm();
-        get_torque(rpm) * self.transmission.get_final_ratio()
+        get_torque(rpm) * self.transmission.get_final_ratio() * self.powertrain_efficiency
     }
 
     fn get_max_force(&self) -> f64 {
