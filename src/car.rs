@@ -40,7 +40,7 @@ impl Car {
             downshift: 1500.0,
             idle_rpm: 850.0,
             time_ms: 0.0,
-            powertrain_efficiency: 0.7,
+            powertrain_efficiency: 0.75,
             weight_balance: Car::get_weight_distribution(WEIGHT, 0.0),
         }
     }
@@ -156,29 +156,29 @@ impl Car {
 fn get_rpm_test() {
     let mut car = Car::new();
     assert_f64_near!(850.0, car.get_current_rpm());
-    assert_f64_near!(6452.566259617547, car.get_max_force());
+    assert_f64_near!(6913.463849590229, car.get_max_force());
 
     car.set_velocity_kmh(10.0);
     assert_f64_near!(1317.4233064528362, car.get_current_rpm());
-    assert_f64_near!(8777.220273021503, car.get_max_force());
+    assert_f64_near!(9404.164578237327, car.get_max_force());
 
     car.set_velocity_kmh(20.0);
     assert_f64_near!(2634.8466129056724, car.get_current_rpm());
-    assert_f64_near!(10082.134780652417, car.get_max_force());
+    assert_f64_near!(10802.287264984732, car.get_max_force());
 
     car.set_velocity_kmh(30.0);
     assert_f64_near!(3952.2699193585086, car.get_current_rpm());
-    assert_f64_near!(10082.134780652417, car.get_max_force());
+    assert_f64_near!(10802.287264984732, car.get_max_force());
 
     car.set_gear(2);
     assert_f64_near!(2153.1763557320146, car.get_current_rpm());
-    assert_f64_near!(5492.695253093362, car.get_max_force());
+    assert_f64_near!(5885.030628314317, car.get_max_force());
 
     car.set_velocity_kmh(40.0);
     assert_f64_near!(2870.901807642686, car.get_current_rpm());
-    assert_f64_near!(5492.695253093362, car.get_max_force());
+    assert_f64_near!(5885.030628314317, car.get_max_force());
 
     car.set_velocity_kmh(90.0);
     assert_f64_near!(6459.529067196044, car.get_current_rpm());
-    assert_f64_near!(3765.5519232962406, car.get_max_force());
+    assert_f64_near!(4034.519917817401, car.get_max_force());
 }
